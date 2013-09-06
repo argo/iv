@@ -5,4 +5,3 @@ var Printer = module.exports = function(greeter) {
 Printer.prototype.print = function() {
   console.log(this.greeter.greet());
 };
-

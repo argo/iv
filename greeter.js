@@ -5,4 +5,3 @@ var Greeter = module.exports = function(greeting) {
 Greeter.prototype.greet = function() {
   return this.greeting.message;
 };
-
