@@ -11,18 +11,22 @@ var Definition = function(name, constructor, args, lifestyle) {
   this.instance = null;
 };
 
-var ServiceLocator = module.exports = function() {
+var Iv = module.exports = function() {
   this.entries = {};
   this.dependents = {};
 };
 
-ServiceLocator.create = function(config) {
-  var locator = new ServiceLocator();
-  config(locator);
-  return locator;
+Iv.create = function(config) {
+  var container = new Iv();
+
+  if (config) {
+    config(container);
+  }
+
+  return container;
 };
 
-ServiceLocator.prototype.register = function(name, constructor, args, lifestyle) {
+Iv.prototype.register = function(name, constructor, args, lifestyle) {
   if (typeof name === 'function') {
     this.register(name.call(this));
   }
@@ -65,7 +69,7 @@ ServiceLocator.prototype.register = function(name, constructor, args, lifestyle)
   this.entries[name] = definition;
 };
 
-ServiceLocator.prototype.evict = function(name) {
+Iv.prototype.evict = function(name) {
   var self = this;
   if (self.dependents[name]) {
     self.dependents[name].forEach(function(dep) {
@@ -75,7 +79,7 @@ ServiceLocator.prototype.evict = function(name) {
   }
 };
 
-ServiceLocator.prototype.resolve = function(name, args) {
+Iv.prototype.resolve = function(name, args) {
   // Prefer using args at registration or from a factory.
   // Args are prepended to args set at registration time.
   // This might be useful when starting an app, for instance.
@@ -143,14 +147,14 @@ ServiceLocator.prototype.resolve = function(name, args) {
   return obj;
 };
 
-ServiceLocator.prototype.component = function(name) {
+Iv.prototype.component = function(name) {
   return {
     $type: 'component',
     $name: name
   };
 };
 
-ServiceLocator.prototype.dynamic = function(fn) {
+Iv.prototype.dynamic = function(fn) {
   return {
     $type: 'dynamic',
     $fn: fn

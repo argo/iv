@@ -3,15 +3,15 @@ var Greeter = require('./greeter');
 var Printer = require('./printer');
 var App = require('./example2_app');
 
-module.exports = function(locator) {
-  var component = locator.component;
-  var dynamic = locator.dynamic;
+module.exports = function(container) {
+  var component = container.component;
+  var dynamic = container.dynamic;
 
   var now = function() {
     return new Date();
   };
 
-  locator.register([{
+  container.register([{
       name: 'greeting',
       value: Greeting,
       params: ['The time is:', dynamic(now)]

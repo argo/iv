@@ -1,17 +1,17 @@
-var ServiceLocator = require('./service_locator');
+var iv = require('../iv');
 var Greeting = require('./greeting');
 var Greeter = require('./greeter');
 var Printer = require('./printer');
 
-var locator = new ServiceLocator();
-var component = locator.component;
-var dynamic = locator.dynamic;
+var container = new iv();
+var component = container.component;
+var dynamic = container.dynamic;
 
 var now = function() {
   return 'The time is: ' + new Date();
 };
 
-locator.register([{
+container.register([{
     name: 'greeting',
     value: Greeting,
     params: [dynamic(now)],
@@ -30,10 +30,10 @@ locator.register([{
     lifestyle: 'transient'
 }]);
 
-printer = locator.resolve('printer');
+printer = container.resolve('printer');
 printer.print();
 
 setTimeout(function() {
-  printer = locator.resolve('printer');
+  printer = container.resolve('printer');
   printer.print();
 }, 1000);
