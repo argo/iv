@@ -1,0 +1,24 @@
+{
+  "name": "iv",
+  "version": "0.0.1",
+  "description": "A dependency injection tool.",
+  "main": "iv.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dependency",
+    "injection",
+    "ioc",
+    "container",
+    "register",
+    "resolve",
+    "service",
+    "locator"
+  ],
+  "author": "Kevin Swiber <kswiber@gmail.com>",
+  "license": "MIT"
+}
