@@ -18,9 +18,9 @@ var greeterObj = {
   }
 };
 
-container.register('greeter1', Greeter, ['1: Hello world!']);
-container.register('greeter2', greeterFn, ['2: Hello world!']);
-container.register('greeter3', greeterObj);
+container.register('greeter1', 'greeter.default', Greeter, ['1: Hello world!']);
+container.register('greeter2', 'greeter.default', greeterFn, ['2: Hello world!']);
+container.register('greeter3', 'greeter.default', greeterObj);
 
 for (var i = 0; i < 3; i++) {
   console.log('iteration:', i);

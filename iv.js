@@ -3,21 +3,28 @@ var Implementation = function(constructor, args) {
   this.args = args;
 };
 
-var Definition = function(name, constructor, args, lifestyle) {
+var Definition = function(name, id, constructor, args, lifestyle) {
   this.name = name;
+  this.id = id;
   this.value = new Implementation(constructor, args);
   this.dependencies = [];
-  this.lifestyle = lifestyle || 'singleton';
+  this.lifestyle = lifestyle || 'transient';
   this.instance = null;
 };
 
-var Iv = module.exports = function() {
+var Iv = module.exports = function(options) {
+  this.debug = options ? options.debug : false;
   this.entries = {};
   this.dependents = {};
 };
 
-Iv.create = function(config) {
-  var container = new Iv();
+Iv.create = function(config, options) {
+  if (typeof config === 'object') {
+    options = config;
+    config = null;
+  };
+
+  var container = new Iv(options);
 
   if (config) {
     config(container);
@@ -26,7 +33,21 @@ Iv.create = function(config) {
   return container;
 };
 
-Iv.prototype.register = function(name, constructor, args, lifestyle) {
+Iv.inspect = function(obj) {
+  if (!obj.__iv_debug_enabled) {
+    return null;
+  }
+
+  var debug = {
+    name: obj.__iv_name,
+    id: obj.__iv_id,
+    dependencies: obj.__iv_dependencies
+  };
+
+  return debug;
+};
+
+Iv.prototype.register = function(name, id, constructor, args, lifestyle) {
   if (typeof name === 'function') {
     this.register(name.call(this));
   }
@@ -42,26 +63,26 @@ Iv.prototype.register = function(name, constructor, args, lifestyle) {
 
   if (typeof name === 'object') {
     var options = name;
+    id = options.id;
     constructor = options.value;
     args = options.params;
     lifestyle = options.lifestyle;
     name = options.name;
   }
 
-
-  var definition = new Definition(name, constructor, args, lifestyle);
+  var definition = new Definition(name, id, constructor, args, lifestyle);
   args = args || [];
 
   var self = this;
   args.forEach(function(arg) {
     if (typeof arg === 'object' && arg['$type']
       && arg['$type'] === 'component') {
-      var $name = arg['$name'];
-      definition.dependencies.push($name);
-      if (!self.dependents[$name]) {
-        self.dependents[$name] = [];
+      var $value = arg['$value'];
+      definition.dependencies.push($value);
+      if (!self.dependents[$value]) {
+        self.dependents[$value] = [];
       }
-      self.dependents[$name].push(definition.name);
+      self.dependents[$value].push(definition.name);
     }
   });
 
@@ -105,21 +126,54 @@ Iv.prototype.resolve = function(name, args) {
     var tempArgs = value.args || [];
     var args = args || [];
 
-    var self = this;
-    tempArgs.forEach(function(arg) {
+    function evalArg(arg, definition) {
+      var ret = arg;
+
       if (typeof arg === 'object' && arg['$type']) {
         var type = arg['$type'];
-        if (type === 'component') {
-          arg = self.resolve(arg['$name']);
-          definition.dependencies.push(arg['$name']);
-        } else if (type === 'dynamic') {
-          arg = arg['$fn']();
+
+        switch(type) {
+          case 'component':
+            ret = self.resolve(arg['$value']);
+            definition.dependencies.push(arg['$value']);
+            break;
+          case 'dynamic':
+            ret = arg['$value']();
+            break;
+          case 'array':
+            ret = arg['$value'].map(function(a) {
+              return evalArg(a, definition);
+            });
         }
       }
+
+      return ret;
+    }
+
+    var self = this;
+    tempArgs.forEach(function(arg) {
+      arg = evalArg(arg, definition);
       args.push(arg);
     });
 
     if (typeof constructor === 'function') {
+      if (this.debug) {
+        var deps = [];
+
+        if (definition.dependencies.length) {
+          var self = this;
+          deps = definition.dependencies.map(function(dep) {
+            var entry = self.entries[dep];
+            return { id: entry.id, name: entry.name };
+          });
+        }
+
+        constructor.prototype.__iv_debug_enabled = true;
+        constructor.prototype.__iv_name = definition.name;
+        constructor.prototype.__iv_id = definition.id;
+        constructor.prototype.__iv_dependencies = deps;
+      }
+
       obj = Object.create(constructor.prototype);
       obj.constructor.apply(obj, args);
 
@@ -150,13 +204,20 @@ Iv.prototype.resolve = function(name, args) {
 Iv.prototype.component = function(name) {
   return {
     $type: 'component',
-    $name: name
+    $value: name
   };
 };
 
 Iv.prototype.dynamic = function(fn) {
   return {
     $type: 'dynamic',
-    $fn: fn
+    $value: fn
+  };
+};
+
+Iv.prototype.array = function() {
+  return {
+    $type: 'array',
+    $value: Array.prototype.slice.call(arguments)
   };
 };
