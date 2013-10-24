@@ -144,6 +144,10 @@ Iv.prototype.resolve = function(name, args) {
             ret = arg['$value'].map(function(a) {
               return evalArg(a, definition);
             });
+            break;
+          case 'value':
+            ret = arg['$value'];
+            break;
         }
       }
 
@@ -212,6 +216,13 @@ Iv.prototype.dynamic = function(fn) {
   return {
     $type: 'dynamic',
     $value: fn
+  };
+};
+
+Iv.prototype.value = function(val) {
+  return {
+    $type: 'value',
+    $value: val
   };
 };
 
